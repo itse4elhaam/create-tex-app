@@ -70,12 +70,16 @@ struct Opts askForOpts() {
     return opts;
 }
 
-void createFolders(char *namesArray) {
-    size_t folderCount = sizeof(namesArray) / sizeof(namesArray[0]);
+void createFolders(char **namesArray, size_t folderCount) {
+    if (chdir("src") == -1) {
+        perror("Unable to change directory to src");
+        exit(EXIT_FAILURE);
+    }
+
     for (size_t i = 0; i < folderCount; i++) {
-        if (mkdir(strcat("src\\", namesArray[i])) == 1) {
-            printf("Unable to create folders, quitting");
-            exit(0);
+        if (mkdir(namesArray[i], 0777) == -1) {
+            perror("Unable to create folders");
+            exit(EXIT_FAILURE);
         }
     }
 }
@@ -86,7 +90,8 @@ void completeInstallation(const struct Opts options) {
         exit(0);
     }
     if (options.opinionatedStruct) {
-        createFolders(FOLDERS_TO_CREATE);
+        size_t folderSize = sizeof(FOLDERS_TO_CREATE) / sizeof(FOLDERS_TO_CREATE[0]);
+        createFolders(FOLDERS_TO_CREATE, folderSize);
     }
 }
 
