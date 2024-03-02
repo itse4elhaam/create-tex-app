@@ -4,6 +4,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+// todo organize functions into different files
+// todo create one file for all types and also move there
+// todo create new constants
+
 struct Opts {
     bool srcDir;
     bool pathAlias;
@@ -84,6 +88,70 @@ void createFolders(char **namesArray, size_t folderCount) {
     }
 }
 
+// todo create funcs named read and write file to optimize
+void createFiles() {
+    // todo move these somewhere else
+    const char *SERVER_SOURCE = "lib/server.txt";
+    const char *MORGAN_SOURCE = "lib/morgan.txt";
+    const char *CONSTANTS_SOURCE = "lib/constants.txt";
+    const char *typesSource = "lib/types.txt";
+
+    const char *SERVER_DESTINATION = "src/server.ts";
+    const char *MORGAN_DESTINATION = "src/config/morgan-config.ts";
+    const char *CONSTANTS_DESTINATION = "src/lib/constants.ts";
+    const char *TYPES_DESTINATION = "src/lib/types.ts";
+
+    FILE *serverFile = fopen(SERVER_SOURCE, "r");
+    FILE *morganFile = fopen(MORGAN_SOURCE, "r");
+    FILE *constantsFile = fopen(CONSTANTS_SOURCE, "r");
+    FILE *typesFile = fopen(typesSource, "r");
+
+    if (serverFile == NULL) {
+        printf("\nserver file is causing issues\n");
+    }
+
+    // Open destination files for writing
+    FILE *serverDestFile = fopen(SERVER_DESTINATION, "w");
+    FILE *morganDestFile = fopen(MORGAN_DESTINATION, "w");
+    FILE *constantsDestFile = fopen(CONSTANTS_DESTINATION, "w");
+    FILE *typesDestFile = fopen(TYPES_DESTINATION, "w");
+
+    if (serverDestFile == NULL) {
+        printf("\nserver dest file is causing issues\n");
+    }
+
+    if (serverFile == NULL || morganFile == NULL || constantsFile == NULL || typesFile == NULL || serverDestFile == NULL || morganDestFile == NULL || constantsDestFile == NULL || typesDestFile == NULL) {
+        printf("Error opening files for reading or writing.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // Read content from source files and write to destination files
+    int ch;
+    while ((ch = fgetc(serverFile)) != EOF) {
+        fputc(ch, serverDestFile);
+    }
+    while ((ch = fgetc(morganFile)) != EOF) {
+        fputc(ch, morganDestFile);
+    }
+    while ((ch = fgetc(constantsFile)) != EOF) {
+        fputc(ch, constantsDestFile);
+    }
+    while ((ch = fgetc(typesFile)) != EOF) {
+        fputc(ch, typesDestFile);
+    }
+
+    fclose(serverFile);
+    fclose(morganFile);
+    fclose(constantsFile);
+    fclose(typesFile);
+    fclose(serverDestFile);
+    fclose(morganDestFile);
+    fclose(constantsDestFile);
+    fclose(typesDestFile);
+
+    printf("Boiler plate files created!.\n");
+}
+
 void completeInstallation(const struct Opts options) {
     if (options.srcDir && mkdir("src") == 1) {
         printf("Unable to create folders, quitting");
@@ -93,6 +161,7 @@ void completeInstallation(const struct Opts options) {
         size_t folderSize = sizeof(FOLDERS_TO_CREATE) / sizeof(FOLDERS_TO_CREATE[0]);
         createFolders(FOLDERS_TO_CREATE, folderSize);
     }
+    createFiles();
 }
 
 void controller() {
@@ -118,7 +187,7 @@ void controller() {
     completeInstallation(opts);
 }
 
-main() {
+int main() {
     controller();
     return 0;
 }
