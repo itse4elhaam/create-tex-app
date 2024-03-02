@@ -1,44 +1,119 @@
+#include <c++/11/bits/ranges_util.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-int main() {
+struct Opts {
+    bool srcDir;
+    bool pathAlias;
+    bool apiRoutesLogging;
+    bool opinionatedStruct;
+};
+
+const struct Opts DEFAULT_OPTIONS = {
+    .srcDir = true,
+    .pathAlias = true,
+    .opinionatedStruct = true,
+    .apiRoutesLogging = true};
+
+const char *FOLDERS_TO_CREATE[] = {"config", "controllers", "helpers", "models", "lib", "routes"};
+
+bool isPackageManagerValid(char pm[10]) {
+    const bool isValid = strcmp(pm, "npm") == 0 || strcmp(pm, "yarn") == 0 || strcmp(pm, "pnpm") == 0;
+    return isValid;
+}
+
+void installIfPackageManagerNotInstalled(char pm[10]) {
+    char checkCommand[50];
+    sprintf(checkCommand, "%s --version", pm);
+
+    if (system(checkCommand) == 1) {
+        printf("%s is not installed. Installing...\n", pm);
+        char installCommand[50];
+        sprintf(installCommand, "npm install -g %s", pm);
+
+        if (system(installCommand) == 1) {
+            printf("Error installing %s. Please install it manually.\n", pm);
+            exit(0);
+        }
+
+        printf("%s installed successfully.\n", pm);
+        return;
+    }
+    printf("%s is installed.\n", pm);
+}
+
+struct Opts askForOpts() {
+    struct Opts opts;
+
+    printf("Do you want to include the 'src' directory? (y/n, default: y): ");
+    char srcDirChoice;
+    scanf(" %c", &srcDirChoice);
+    opts.srcDir = (srcDirChoice == 'y' || srcDirChoice == 'Y');
+
+    printf("Do you want to include a path alias? (y/n, default: y): ");
+    char pathAliasChoice;
+    scanf(" %c", &pathAliasChoice);
+    opts.pathAlias = (pathAliasChoice == 'y' || pathAliasChoice == 'Y');
+
+    printf("Do you want API routes logging? (y/n, default: y): ");
+    char apiRoutesLoggingChoice;
+    scanf(" %c", &apiRoutesLoggingChoice);
+    opts.apiRoutesLogging = (apiRoutesLoggingChoice == 'y' || apiRoutesLoggingChoice == 'Y');
+
+    printf("Do you want an opinionated folder structure? (y/n, default: y): ");
+    char opinionatedStructChoice;
+    scanf(" %c", &opinionatedStructChoice);
+    opts.opinionatedStruct = (opinionatedStructChoice == 'y' || opinionatedStructChoice == 'Y');
+
+    return opts;
+}
+
+void createFolders(char *namesArray) {
+    size_t folderCount = sizeof(namesArray) / sizeof(namesArray[0]);
+    for (size_t i = 0; i < folderCount; i++) {
+        if (mkdir(strcat("src\\", namesArray[i])) == 1) {
+            printf("Unable to create folders, quitting");
+            exit(0);
+        }
+    }
+}
+
+void completeInstallation(const struct Opts options) {
+    if (options.srcDir && mkdir("src") == 1) {
+        printf("Unable to create folders, quitting");
+        exit(0);
+    }
+    if (options.opinionatedStruct) {
+        createFolders(FOLDERS_TO_CREATE);
+    }
+}
+
+void controller() {
     printf("Welcome to TypeScript Express generator. You need to have Node.js installed to run this utility.\n");
 
     char packageManager[10];
 
-    // Get package manager choice
     printf("Which package manager do you want to use? (npm/yarn/pnpm): ");
     fgets(packageManager, sizeof(packageManager), stdin);
-    packageManager[strcspn(packageManager, "\n")] = '\0';  // Remove the newline character
+    packageManager[strcspn(packageManager, "\n")] = '\0';
 
-    // Check if it is installed and install if necessary
-    if (strcmp(packageManager, "npm") == 0 || strcmp(packageManager, "yarn") == 0 || strcmp(packageManager, "pnpm") == 0) {
-        printf("You selected: %s\n", packageManager);
-
-        // Check if the package manager is installed
-        char checkCommand[50];
-        sprintf(checkCommand, "%s --version", packageManager);
-
-        if (system(checkCommand) == 0) {
-            printf("%s is installed.\n", packageManager);
-        } else {
-            printf("%s is not installed. Installing...\n", packageManager);
-
-            // Install the package manager
-            char installCommand[50];
-            sprintf(installCommand, "npm install -g %s", packageManager);
-
-            if (system(installCommand) == 0) {
-                printf("%s installed successfully.\n", packageManager);
-            } else {
-                printf("Error installing %s. Please install it manually.\n", packageManager);
-            }
-        }
-    } else {
-        printf("Invalid package manager choice. Please choose npm, yarn, or pnpm.\n");
+    if (!isPackageManagerValid(packageManager)) {
+        printf("Invalid package manager choice. Please choose npm/yarn/pnpm.\n");
+        exit(0);
     }
 
-    return 0;
+    installIfPackageManagerNotInstalled(packageManager);
+
+    printf("You selected: %s\n", packageManager);
+
+    struct Opts opts = askForOpts();
+
+    completeInstallation(opts);
 }
 
+main() {
+    controller();
+    return 0;
+}
